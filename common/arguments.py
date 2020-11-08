@@ -110,8 +110,8 @@ def parse_args():
                         metavar='N', help='image size')
     parser.add_argument('--chck_load', default='')
     parser.add_argument('--big_data', default='')
-    parser.add_argument('--save-folder', default='')
-    parser.add_argument('--save-home', default='')
+    parser.add_argument('--save_folder', default='')
+    parser.add_argument('--save_home', default='')
     parser.add_argument('--lol_path', default='')
 
     parser.set_defaults(bone_length_term=True)
