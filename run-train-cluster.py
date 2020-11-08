@@ -402,8 +402,9 @@ if not args.evaluate:
             # chk_path = os.path.join(
             #     args.checkpoint, 'epoch_{}.bin'.format(epoch))
             chk_path = os.path.join(
-                args.save_folder, '/epoch_{}.bin'.format(epoch))
+                args.save_folder, 'epoch_{}.bin'.format(epoch))
 
+            print(chk_path)
             torch.save({
                 'epoch': epoch,
                 'lr': lr,
@@ -417,7 +418,7 @@ if not args.evaluate:
             print('Saving checkpoint to', chk_path)
             if epoch % (3 * args.checkpoint_frequency) == 0:
                 chk_path = os.path.join(
-                    args.save_home, '/home-epoch_{}.bin'.format(epoch))
+                    args.save_home, 'home-epoch_{}.bin'.format(epoch))
 
                 torch.save({
                     'epoch': epoch,
