@@ -30,17 +30,17 @@ print(args)
 
 
 print('Loading dataset...')
-dataset_path = 'data/data_3d_' + args.dataset + '.npz'
-dataset_path = '/home/filipkr/Documents/xjob/data_2d_custom_lol-take2.npz'
-pose_path = '/home/filipkr/Documents/xjob/custom_2d_training.npz'
+# dataset_path = 'data/data_3d_' + args.dataset + '.npz'
+# dataset_path = '/home/filipkr/Documents/xjob/data_2d_custom_lol-take2.npz'
+# pose_path = '/home/filipkr/Documents/xjob/custom_2d_training.npz'
 
-dataset = CustomDataset(dataset_path)
+dataset = CustomDataset(args.lol_path)
 
-data = np.load(pose_path, allow_pickle=True)
-data = data['data'].item()
 
 print('Loading 2D detections...')
-keypoints_metadata = np.load(dataset_path,
+# keypoints_metadata = np.load(dataset_path,
+#                              allow_pickle=True)['metadata'].item()
+keypoints_metadata = np.load(args.lol_path,
                              allow_pickle=True)['metadata'].item()
 # keypoints = np.load('data/data_2d_' + args.dataset + '_' +
 #                     args.keypoints + '.npz', allow_pickle=True)
@@ -48,16 +48,13 @@ keypoints_symmetry = keypoints_metadata['keypoints_symmetry']
 kps_left, kps_right = list(keypoints_symmetry[0]), list(keypoints_symmetry[1])
 joints_left, joints_right = list(dataset.skeleton().joints_left()), list(
     dataset.skeleton().joints_right())
-# keypoints = keypoints['positions_2d'].item()
-keypoints = np.load(pose_path, allow_pickle=True)
 
 
 sets = {'train': {'sub': ['36', '10', '12', '20'], 'act': ['SLS1R']},
         'test': {'sub': [], 'act': []}}
 
 
-big_data = np.load('/home/filipkr/Documents/xjob/results-train/big_data.npz',
-                   allow_pickle=True)
+big_data = np.load(args.big_data, allow_pickle=True)
 
 data = big_data['data'].item()
 
@@ -113,38 +110,17 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
     if len(out_poses_3d) == 0:
         out_poses_3d = None
 
-    # print('poses 3d: {}'.format(out_poses_3d))
-    # print('poses 2d: {}'.format(out_poses_2d))
-    # print('out camera: {}'.format(out_camera_params))
-
     return out_camera_params, out_poses_3d, out_poses_2d
 
 
 _, p3, p2 = fetch(['02', '36'])
 
-# a2=np.array(p2)
-# a3=np.array(p3)
-# print('2:', a2.shape)
-# print('3:', a3.shape)
-
-# print(np.shape(p3))
-# print(p3)
-# print(p2)
-
-# print(p2[0])
-# print(p2[0])
-
-# assert False
 
 action_filter = None if args.actions == '*' else args.actions.split(',')
 if action_filter is not None:
     print('Selected actions:', action_filter)
 
 
-# print('ST', subjects_test)
-# print('AF', action_filter)
-# subjects_test = ['36']
-# subjects_train = ['36']
 cameras_valid, poses_valid, poses_valid_2d = fetch(sets['test']['sub'],
                                                    sets['test']['act'])
 
@@ -156,9 +132,8 @@ outjoints = 9
 filter_widths = [int(x) for x in args.architecture.split(',')]
 
 outjoints = 9
-chk_filename = '/home/filipkr/Documents/xjob/motion-analysis/pose/VideoPose3D/checkpoint/pretrained_h36m_detectron_coco.bin'
-loaded_weights = torch.load(
-    chk_filename, map_location=lambda storage, loc: storage)
+loaded_weights = torch.load(args.chck_load,
+                            map_location=lambda storage, loc: storage)
 loaded_weights['model_pos']['shrink.weight'] = torch.tensor(
     np.ones((outjoints * 3, 1024, 1)))
 loaded_weights['model_pos']['shrink.bias'] = torch.tensor(
@@ -229,10 +204,6 @@ if args.resume or args.evaluate:
     else:
         model_traj = None
 
-# print(poses_valid)
-# print(poses_valid_2d)
-# print(np.shape(poses_valid))
-# print(np.shape(poses_valid_2d))
 test_generator = UnchunkedGenerator(cameras_valid, poses_valid, poses_valid_2d,
                                     pad=pad, causal_shift=causal_shift, augment=False,
                                     kps_left=kps_left, kps_right=kps_right, joints_left=joints_left, joints_right=joints_right)
@@ -348,16 +319,16 @@ if not args.evaluate:
                     inputs_3d[:, :, 0] = 0
 
                     # Predict 3D poses
-                    print('2d size', inputs_2d.size())
-                    print(inputs_3d.size())
+                    # print('2d size', inputs_2d.size())
+                    # print(inputs_3d.size())
 
                     predicted_3d_pos = model_pos(inputs_2d)
-                    print(predicted_3d_pos)
-                    print(inputs_3d)
-                    print(predicted_3d_pos.size())
-                    print(inputs_3d.size())
+                    # print(predicted_3d_pos)
+                    # print(inputs_3d)
+                    # print(predicted_3d_pos.size())
+                    # print(inputs_3d.size())
                     inputs_3d = inputs_3d[:, :-1, :, :]
-                    print(inputs_3d.size())
+                    # print(inputs_3d.size())
 
                     loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
                     epoch_loss_3d_valid += inputs_3d.shape[0] * \
@@ -428,9 +399,10 @@ if not args.evaluate:
 
         # Save checkpoint if necessary
         if epoch % args.checkpoint_frequency == 0:
+            # chk_path = os.path.join(
+            #     args.checkpoint, 'epoch_{}.bin'.format(epoch))
             chk_path = os.path.join(
-                args.checkpoint, 'epoch_{}.bin'.format(epoch))
-            print('Saving checkpoint to', chk_path)
+                args.save_folder, '/epoch_{}.bin'.format(epoch))
 
             torch.save({
                 'epoch': epoch,
@@ -441,6 +413,21 @@ if not args.evaluate:
                 'model_traj': None,
                 'random_state_semi': None,
             }, chk_path)
+
+            print('Saving checkpoint to', chk_path)
+            if epoch % (3 * args.checkpoint_frequency) == 0:
+                chk_path = os.path.join(
+                    args.save_home, '/home-epoch_{}.bin'.format(epoch))
+
+                torch.save({
+                    'epoch': epoch,
+                    'lr': lr,
+                    'random_state': train_generator.random_state(),
+                    'optimizer': optimizer.state_dict(),
+                    'model_pos': model_pos_train.state_dict(),
+                    'model_traj': None,
+                    'random_state_semi': None,
+                }, chk_path)
 
         # Save training curves after every epoch, as .png images (if requested)
         if args.export_training_curves:  # and epoch > 3:
@@ -458,6 +445,6 @@ if not args.evaluate:
             plt.ylabel('MPJPE (m)')
             plt.xlabel('Epoch')
             plt.xlim((3, epoch))
-            plt.savefig(os.path.join(args.checkpoint, 'loss_3d.png'))
+            plt.savefig(os.path.join(args.save_folder, 'loss_3d.png'))
 
             plt.close('all')

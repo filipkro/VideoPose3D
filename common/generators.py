@@ -41,7 +41,9 @@ class ChunkedGenerator:
         # Build lineage info
         pairs = []  # (seq_idx, start_frame, end_frame, flip) tuples
         for i in range(len(poses_2d)):
-            assert poses_3d is None or poses_3d[i].shape[0] == poses_3d[i].shape[0]
+            print(poses_2d[i].shape)
+            print(poses_3d[i].shape)
+            assert poses_3d is None or poses_2d[i].shape[0] == poses_3d[i].shape[0]
             n_chunks = (poses_2d[i].shape[0] +
                         chunk_length - 1) // chunk_length
             offset = (n_chunks * chunk_length - poses_2d[i].shape[0]) // 2
