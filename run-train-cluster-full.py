@@ -248,7 +248,7 @@ if not args.evaluate:
             # print(inputs_2d.size())
 
             # Predict 3D poses
-            predicted_3d_pos = model_pos_train(inputs_2d) / 1000
+            predicted_3d_pos = model_pos_train(inputs_2d)
             # print('predicted', predicted_3d_pos)
             # print('inputys_3d', inputs_3d)
             loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
@@ -288,7 +288,7 @@ if not args.evaluate:
                     # print('2d size', inputs_2d.size())
                     # print(inputs_3d.size())
 
-                    predicted_3d_pos = model_pos(inputs_2d)
+                    predicted_3d_pos = model_pos(inputs_2d) / 1000
                     # print(predicted_3d_pos)
                     # print(inputs_3d)
                     # print(predicted_3d_pos.size())
