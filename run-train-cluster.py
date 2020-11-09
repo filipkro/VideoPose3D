@@ -65,9 +65,9 @@ fix_one_of = ['10', '12', '20']
 for subject in data.keys():
     for action in data[subject].keys():
         poses = data[subject][action]['positions_2d'][0]
-        if subject in fix_one_of:
-            poses3d = data[subject][action]['positions_3d']
-            data[subject][action]['positions_3d'] = poses3d[:-1, ...]
+        # if subject in fix_one_of:
+        #     poses3d = data[subject][action]['positions_3d']
+        #     data[subject][action]['positions_3d'] = poses3d[:-1, ...]
 
         dx = np.max(poses[:, :, 0]) - np.min(poses[:, :, 0])
         dy = np.max(poses[:, :, 1]) - np.min(poses[:, :, 1])
@@ -98,12 +98,12 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
 
                     if ('positions_2d' in data[subject][action] and
                             'positions_3d' in data[subject][action]):
-                        # print(data[subject][action]['positions_2d'])
-                        # print(data[subject][action]['positions_3d'])
+                        print(data[subject][action]['positions_2d'])
+                        print(data[subject][action]['positions_3d'])
                         out_poses_2d.append(data[subject]
                                             [action]['positions_2d'])
                         out_poses_3d.append(data[subject]
-                                            [action]['positions_3d'])
+                                            [action]['positions_3d'][0])
 
     if len(out_camera_params) == 0:
         out_camera_params = None
@@ -307,7 +307,7 @@ if not args.evaluate:
                     # print(inputs_3d)
                     # print(predicted_3d_pos.size())
                     # print(inputs_3d.size())
-                    inputs_3d = inputs_3d[:, :-1, :, :]
+                    # inputs_3d = inputs_3d[:, :-1, :, :]
                     # print(inputs_3d.size())
 
                     loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
