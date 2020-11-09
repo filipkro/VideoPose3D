@@ -59,32 +59,6 @@ big_data = np.load(args.big_data, allow_pickle=True)
 data = big_data['data'].item()
 
 # fix 2d coordinates:
-
-fix_one_of = ['10', '12', '20']
-
-for subject in data.keys():
-    for action in data[subject].keys():
-        poses = data[subject][action]['positions_2d'][0]
-        if subject in fix_one_of:
-            poses3d = data[subject][action]['positions_3d']
-            data[subject][action]['positions_3d'] = poses3d[:-1, ...]
-
-        dx = np.max(poses[:, :, 0]) - np.min(poses[:, :, 0])
-        dy = np.max(poses[:, :, 1]) - np.min(poses[:, :, 1])
-        norm_dist = np.max((dx, dy))
-        print(norm_dist)
-        poses = 2 * poses / norm_dist - 1
-
-        shift_y = (np.max(poses[:, :, 1]) + np.min(poses[:, :, 1])) / 2
-        poses[..., 1] = poses[..., 1] - shift_y
-        shift_x = (np.max(poses[:, :, 0]) + np.min(poses[:, :, 0])) / 2
-        poses[..., 0] = poses[..., 0] - shift_x
-
-        # fix thi, 'cause stupid now....
-
-        data[subject][action]['positions_2d'] = poses
-
-
 def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
     out_poses_3d = []
     out_poses_2d = []
