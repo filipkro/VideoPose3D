@@ -199,17 +199,17 @@ class TemporalModelOptimized1f(TemporalModelBase):
         self.layers_bn = nn.ModuleList(layers_bn)
 
     def _forward_blocks(self, x):
-        # print('first:', x.size())
+        print('first:', x.size())
         x = self.drop(self.relu(self.expand_bn(self.expand_conv(x))))
-        # print('sec', x.size())
+        print('sec', x.size())
         # print(range(len(self.pad) - 1))
         for i in range(len(self.pad) - 1):
             res = x[:, :, self.causal_shift[i + 1] +
                     self.filter_widths[i + 1] // 2:: self.filter_widths[i + 1]]
-            # print('in loop', x.size())
+            print('in loop', x.size())
             x = self.drop(
                 self.relu(self.layers_bn[2 * i](self.layers_conv[2 * i](x))))
-            # print('in loop2', x.size())
+            print('in loop2', x.size())
             x = res + \
                 self.drop(
                     self.relu(self.layers_bn[2 * i + 1](self.layers_conv[2 * i + 1](x))))
