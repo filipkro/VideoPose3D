@@ -58,12 +58,12 @@ def fix_input(poses):
 
 
 def main(args):
-    big_data = np.load('/home/filipkr/Documents/xjob/pose-data/big_data.npz',
+    big_data = np.load('/home/filipkr/Documents/xjob/pose-data/big_data-synced.npz',
                        allow_pickle=True)['data'].item()
 
     in_data = big_data[args.subject][args.action]['positions_2d']
     print(in_data)
-    in_data = fix_input(in_data[0])
+    # in_data = fix_input(in_data[0])
 
     model_pos = TemporalModel(
         17, 2, 9, filter_widths=[3, 3, 3, 3, 3])
@@ -73,9 +73,9 @@ def main(args):
     receptive_field = model_pos.receptive_field()
     pad = (receptive_field - 1) // 2
 
-    gen = UnchunkedGenerator(None, None, [in_data], pad=pad, causal_shift=0)
+    gen = UnchunkedGenerator(None, None, in_data, pad=pad, causal_shift=0)
 
-    prediction = evaluate(gen, model_pos, return_predictions=True)
+    prediction = evaluate(gen, model_pos, return_predictions=True) / 1000
     # predicted_3d_pos = model_pos(inputs_2d)
     print(prediction)
     print(np.shape(prediction))
