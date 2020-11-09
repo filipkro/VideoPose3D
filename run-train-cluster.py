@@ -431,7 +431,7 @@ if not args.evaluate:
                 }, chk_path)
 
         # Save training curves after every epoch, as .png images (if requested)
-        if args.export_training_curves:  # and epoch > 3:
+        if args.export_training_curves and epoch > 3:
             if 'matplotlib' not in sys.modules:
                 import matplotlib
                 matplotlib.use('Agg')
