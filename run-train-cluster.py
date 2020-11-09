@@ -50,8 +50,8 @@ joints_left, joints_right = list(dataset.skeleton().joints_left()), list(
     dataset.skeleton().joints_right())
 
 
-sets = {'train': {'sub': ['02', '05' '10', '12', '20'], 'act': ['SLS1R']},
-        'test': {'sub': ['18'], 'act': ['SLS1R']}}
+sets = {'train': {'sub': ['02', '05', '10', '12', '20'], 'act': ['SLS1R']},
+        'test': {'sub': ['18', '36'], 'act': ['SLS1R']}}
 
 
 big_data = np.load(args.big_data, allow_pickle=True)
@@ -63,6 +63,7 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
     out_poses_3d = []
     out_poses_2d = []
     out_camera_params = []
+    print(subjects)
     for subject in subjects:
         print(subject)
         if subject in data:
@@ -72,10 +73,10 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
 
                     if ('positions_2d' in data[subject][action] and
                             'positions_3d' in data[subject][action]):
-                        print(data[subject][action]['positions_2d'])
-                        print(data[subject][action]['positions_3d'])
+                        # print(data[subject][action]['positions_2d'])
+                        # print(data[subject][action]['positions_3d'])
                         out_poses_2d.append(data[subject]
-                                            [action]['positions_2d'])
+                                            [action]['positions_2d'][0])
                         out_poses_3d.append(data[subject]
                                             [action]['positions_3d'][0])
 
@@ -84,11 +85,22 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
     if len(out_poses_3d) == 0:
         out_poses_3d = None
 
+    print(np.shape(out_poses_2d))
+    print(np.shape(out_poses_3d))
+
     return out_camera_params, out_poses_3d, out_poses_2d
 
 
 cameras_valid, poses_valid, poses_valid_2d = fetch(sets['test']['sub'],
                                                    sets['test']['act'])
+print('FROM FETCH::::', poses_valid)
+print('FROM FETCH::::', poses_valid_2d)
+print(np.shape(poses_valid))
+print(poses_valid[0].shape)
+
+print(np.shape(poses_valid_2d))
+print(poses_valid_2d[0].shape)
+# print('FROM FETCH222::::', poses_valid_2d)
 
 outjoints = 9
 
