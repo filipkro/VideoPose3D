@@ -58,7 +58,7 @@ big_data = np.load(args.big_data, allow_pickle=True)
 
 data = big_data['data'].item()
 
-# fix 2d coordinates:
+
 def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
     out_poses_3d = []
     out_poses_2d = []
@@ -72,12 +72,12 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
 
                     if ('positions_2d' in data[subject][action] and
                             'positions_3d' in data[subject][action]):
-                        # print(data[subject][action]['positions_2d'])
-                        # print(data[subject][action]['positions_3d'])
+                        print(data[subject][action]['positions_2d'])
+                        print(data[subject][action]['positions_3d'])
                         out_poses_2d.append(data[subject]
                                             [action]['positions_2d'])
                         out_poses_3d.append(data[subject]
-                                            [action]['positions_3d'])
+                                            [action]['positions_3d'][0])
 
     if len(out_camera_params) == 0:
         out_camera_params = None
@@ -281,7 +281,7 @@ if not args.evaluate:
                     # print(inputs_3d)
                     # print(predicted_3d_pos.size())
                     # print(inputs_3d.size())
-                    inputs_3d = inputs_3d[:, :-1, :, :]
+                    # inputs_3d = inputs_3d[:, :-1, :, :]
                     # print(inputs_3d.size())
 
                     loss_3d_pos = mpjpe(predicted_3d_pos, inputs_3d)
