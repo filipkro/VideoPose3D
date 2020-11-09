@@ -169,7 +169,12 @@ for param in model_pos_train.layers_bn.parameters():
 for param in model_pos_train.expand_bn.parameters():
     param.requires_grad = False
 
+model_params = 0
+for parameter in model_pos_train.parameters():
+    if parameter.requires_grad:
+        model_params += parameter.numel()
 
+print('Trainable after disabling first layers {}'.format(model_params))
 print('MODEL', model_pos)
 
 if torch.cuda.is_available():
