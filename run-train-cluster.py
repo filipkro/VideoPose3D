@@ -50,8 +50,8 @@ joints_left, joints_right = list(dataset.skeleton().joints_left()), list(
     dataset.skeleton().joints_right())
 
 
-sets = {'train': {'sub': ['36', '10', '12', '20'], 'act': ['SLS1R']},
-        'test': {'sub': [], 'act': []}}
+sets = {'train': {'sub': ['02', '05' '10', '12', '20'], 'act': ['SLS1R']},
+        'test': {'sub': ['18'], 'act': ['SLS1R']}}
 
 
 big_data = np.load(args.big_data, allow_pickle=True)
