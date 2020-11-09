@@ -113,52 +113,32 @@ def fetch(subjects, action_filter=None, subset=1, parse_3d_poses=True):
     return out_camera_params, out_poses_3d, out_poses_2d
 
 
-_, p3, p2 = fetch(['02', '36'])
-
-
-action_filter = None if args.actions == '*' else args.actions.split(',')
-if action_filter is not None:
-    print('Selected actions:', action_filter)
-
-
 cameras_valid, poses_valid, poses_valid_2d = fetch(sets['test']['sub'],
                                                    sets['test']['act'])
-
-print('test', args.subjects_test)
-print('train', args.subjects_train)
 
 outjoints = 9
 
 filter_widths = [int(x) for x in args.architecture.split(',')]
 
 outjoints = 9
-loaded_weights = torch.load(args.chck_load,
-                            map_location=lambda storage, loc: storage)
-loaded_weights['model_pos']['shrink.weight'] = torch.tensor(
+checkpoint = None
+checkpoint = torch.load(args.chck_load,
+                        map_location=lambda storage, loc: storage)
+checkpoint['model_pos']['shrink.weight'] = torch.tensor(
     np.ones((outjoints * 3, 1024, 1)))
-loaded_weights['model_pos']['shrink.bias'] = torch.tensor(
+checkpoint['model_pos']['shrink.bias'] = torch.tensor(
     np.ones((outjoints * 3)))
 
-# outjoints = 9
-if not args.disable_optimizations and not args.dense and args.stride == 1:
-    # Use optimized model for single-frame predictions
-    print(poses_valid_2d)
-
-    model_pos_train = TemporalModelOptimized1f(17, 2, outjoints,
-                                               filter_widths=filter_widths, causal=args.causal, dropout=args.dropout, channels=args.channels)
-    model_pos_train.load_state_dict(loaded_weights['model_pos'])
-    print('loaded')
+model_pos_train = TemporalModelOptimized1f(17, 2, outjoints,
+                                           filter_widths=filter_widths, causal=args.causal, dropout=args.dropout, channels=args.channels)
+model_pos_train.load_state_dict(checkpoint['model_pos'])
+print('loaded')
 
 
-else:
-    # When incompatible settings are detected (stride > 1, dense filters, or disabled optimization) fall back to normal model
-    model_pos_train = TemporalModel(17, 2, outjoints,
-                                    filter_widths=filter_widths, causal=args.causal, dropout=args.dropout, channels=args.channels,
-                                    dense=args.dense)
-
-model_pos = TemporalModel(17, 2, outjoints,
-                          filter_widths=filter_widths, causal=args.causal, dropout=args.dropout, channels=args.channels,
-                          dense=args.dense)
+model_pos = TemporalModel(17, 2, outjoints, filter_widths=filter_widths,
+                          causal=args.causal, dropout=args.dropout,
+                          channels=args.channels, dense=args.dense)
+model_pos.load_state_dict(checkpoint['model_pos'])
 # model_pos_train.load_state_dict(loaded_weights['model_pos'])
 
 receptive_field = model_pos.receptive_field()
@@ -177,32 +157,27 @@ for parameter in model_pos.parameters():
     model_params += parameter.numel()
 print('INFO: Trainable parameter count:', model_params)
 
+for param in model_pos_train.layers_conv.parameters():
+    param.requires_grad = False
+
+for param in model_pos_train.expand_conv.parameters():
+    param.requires_grad = False
+
+for param in model_pos_train.layers_bn.parameters():
+    param.requires_grad = False
+
+for param in model_pos_train.expand_bn.parameters():
+    param.requires_grad = False
+
+
 print('MODEL', model_pos)
 
 if torch.cuda.is_available():
     model_pos = model_pos.cuda()
     model_pos_train = model_pos_train.cuda()
 
-if args.resume or args.evaluate:
-    chk_filename = os.path.join(
-        args.checkpoint, args.resume if args.resume else args.evaluate)
-    print('Loading checkpoint', chk_filename)
-    checkpoint = torch.load(
-        chk_filename, map_location=lambda storage, loc: storage)
-    print('This model was trained for {} epochs'.format(checkpoint['epoch']))
-    model_pos_train.load_state_dict(checkpoint['model_pos'])
-    model_pos.load_state_dict(checkpoint['model_pos'])
 
-    if args.evaluate and 'model_traj' in checkpoint:
-        # Load trajectory model if it contained in the checkpoint (e.g. for inference in the wild)
-        model_traj = TemporalModel(poses_valid_2d[0].shape[-2], poses_valid_2d[0].shape[-1], 1,
-                                   filter_widths=filter_widths, causal=args.causal, dropout=args.dropout, channels=args.channels,
-                                   dense=args.dense)
-        if torch.cuda.is_available():
-            model_traj = model_traj.cuda()
-        model_traj.load_state_dict(checkpoint['model_traj'])
-    else:
-        model_traj = None
+model_traj = None
 
 test_generator = UnchunkedGenerator(cameras_valid, poses_valid, poses_valid_2d,
                                     pad=pad, causal_shift=causal_shift, augment=False,
@@ -243,19 +218,19 @@ if not args.evaluate:
     print('INFO: Training on {} frames'.format(
         train_generator_eval.num_frames()))
 
-    if args.resume:
-        epoch = checkpoint['epoch']
-        if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            train_generator.set_random_state(checkpoint['random_state'])
-        else:
-            print('WARNING: this checkpoint does not contain an optimizer state. The optimizer will be reinitialized.')
-
-        lr = checkpoint['lr']
+    # if args.resume or checkpoint != None:
+    #     epoch = checkpoint['epoch']
+    #     if 'optimizer' in checkpoint and checkpoint['optimizer'] is not None:
+    #         optimizer.load_state_dict(checkpoint['optimizer'])
+    #         train_generator.set_random_state(checkpoint['random_state'])
+    #     else:
+    #         print('WARNING: this checkpoint does not contain an optimizer state. The optimizer will be reinitialized.')
+    #
+    #     lr = checkpoint['lr']
 
     print('** Note: reported losses are averaged over all frames and test-time augmentation is not used here.')
     print('** The final evaluation will be carried out after the last training epoch.')
-
+    print(epoch)
     # Pos model only
     while epoch < args.epochs:
         start_time = time()
